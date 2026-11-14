@@ -3,9 +3,9 @@ import { fitSquare, isSafeCustomImage } from '../shared/customImage';
 import { CUSTOM_NAME_MAX_LENGTH, DEFAULT_SETTINGS, pupDisplayName } from '../shared/types';
 
 describe('自定义名称', () => {
-  it('默认与空白都回退为伴读小狗', () => {
-    expect(pupDisplayName(DEFAULT_SETTINGS)).toBe('伴读小狗');
-    expect(pupDisplayName({ customName: '   ' })).toBe('伴读小狗');
+  it('默认与空白都回退为伴读小宠物', () => {
+    expect(pupDisplayName(DEFAULT_SETTINGS)).toBe('伴读小宠物');
+    expect(pupDisplayName({ customName: '   ' })).toBe('伴读小宠物');
   });
 
   it('使用自定义名称并截断过长输入', () => {

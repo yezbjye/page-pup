@@ -10,7 +10,7 @@ export default defineConfig({
     },
   },
   manifest: {
-    name: '伴读小狗',
+    name: '伴读小宠物',
     description: '只围绕你选中的原文解释和提炼，安静地陪你读网页。',
     version: '0.1.0',
     permissions: ['activeTab', 'scripting', 'storage', 'tabs'],
@@ -19,7 +19,7 @@ export default defineConfig({
       { resources: ['pets/*'], matches: ['https://*/*', 'http://*/*'] },
     ],
     action: {
-      default_title: '在当前网站启用伴读小狗',
+      default_title: '在当前网站启用伴读小宠物',
       default_popup: 'popup.html',
     },
     options_ui: {

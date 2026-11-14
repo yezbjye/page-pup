@@ -169,7 +169,7 @@ async function runReadViaPort(port: chrome.runtime.Port, request: ReadPortReques
     if (!sender?.tab?.id || !sender.url) throw new Error('请从已启用的网页发起阅读');
     const settings = await getSettings();
     const sitePattern = originPattern(sender.url);
-    if (!sitePattern || !shouldInjectOn(settings, sitePattern)) throw new Error('当前网站尚未启用伴读小狗');
+    if (!sitePattern || !shouldInjectOn(settings, sitePattern)) throw new Error('当前网站尚未启用伴读小宠物');
     await checkLlmAccess(settings);
 
     activeReads.get(requestId)?.abort('superseded');

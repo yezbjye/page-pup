@@ -303,7 +303,7 @@ function Options() {
         <section className="options-section">
           <div className="options-section-heading"><span>02</span><div><h2>名称与陪伴形象</h2><p>可以给工具起自己的名字，也可以上传图片作为悬浮形象，已打开的网页会立即更新。</p></div></div>
           <div className="options-custom-name">
-            <label className="options-field"><span>显示名称（留空恢复默认「伴读小狗」，最多 {CUSTOM_NAME_MAX_LENGTH} 字）</span><input value={settings.customName} maxLength={CUSTOM_NAME_MAX_LENGTH} placeholder={pupDisplayName(DEFAULT_SETTINGS)} onChange={(event) => update('customName', event.target.value)} onBlur={() => void saveCustomName()} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void saveCustomName(); } }} /></label>
+            <label className="options-field"><span>显示名称（留空恢复默认「伴读小宠物」，最多 {CUSTOM_NAME_MAX_LENGTH} 字）</span><input value={settings.customName} maxLength={CUSTOM_NAME_MAX_LENGTH} placeholder={pupDisplayName(DEFAULT_SETTINGS)} onChange={(event) => update('customName', event.target.value)} onBlur={() => void saveCustomName()} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void saveCustomName(); } }} /></label>
             <button type="button" className="options-secondary" disabled={uploading} onClick={() => void saveCustomName()}>保存名称</button>
           </div>
           <div className="options-pet-grid">

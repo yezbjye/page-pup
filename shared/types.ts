@@ -57,7 +57,7 @@ export function petOption(id: PetId): PetOption {
   return PET_OPTIONS.find((option) => option.id === id) ?? PET_OPTIONS[0]!;
 }
 
-export const DEFAULT_PUP_NAME = '伴读小狗';
+export const DEFAULT_PUP_NAME = '伴读小宠物';
 export const CUSTOM_NAME_MAX_LENGTH = 12;
 
 export function pupDisplayName(settings: Pick<PupSettings, 'customName'>): string {
