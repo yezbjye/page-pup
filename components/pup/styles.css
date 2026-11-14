@@ -1,0 +1,486 @@
+:host {
+  all: initial;
+  /* 浏览器的强制暗色只会压暗背景、不改文字颜色，浮窗会变成黑底暗字；声明只支持亮色可让浏览器跳过它。 */
+  color-scheme: light;
+  color-scheme: only light;
+  --pup-ink: #302a25;
+  --pup-muted: #766d64;
+  --pup-surface: #fffdf9;
+  --pup-soft: #f5f0e8;
+  --pup-border: #ded5c9;
+  --pup-caramel: #b96836;
+  --pup-caramel-dark: #8e4c27;
+  --pup-sage: #526b51;
+  color: var(--pup-ink);
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+button { font: inherit; }
+button:focus-visible { outline: 2px solid var(--pup-caramel); outline-offset: 2px; }
+
+.pup-anchor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483646;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+  color-scheme: only light;
+  color: var(--pup-ink);
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: opacity 160ms ease;
+}
+.pup-anchor.is-ready { opacity: 1; }
+
+.pup-avatar-button {
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  padding: 0;
+  border: 1px solid var(--pup-border);
+  border-radius: 50%;
+  background: var(--pup-surface);
+  box-shadow: 0 8px 24px rgb(63 45 28 / 12%), 0 1px 3px rgb(63 45 28 / 9%);
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  transition: width 160ms ease, height 160ms ease, border-radius 160ms ease, box-shadow 160ms ease;
+}
+.pup-avatar-button:hover { box-shadow: 0 10px 28px rgb(63 45 28 / 17%), 0 1px 3px rgb(63 45 28 / 10%); }
+.pup-avatar-button:active { cursor: grabbing; }
+/* 休眠态只缩小变淡宠物本体，按钮热区保持原尺寸，方便指针移上去唤醒。 */
+.pup-avatar-button.is-sleepy .pup-pet { opacity: .4; transform: scale(.7); }
+.pup-avatar-button.is-collapsed { width: 46px; height: 46px; border-radius: 50%; }
+.pup-avatar-button.is-open { border-color: #c9b6a2; }
+.pup-status-dot {
+  position: absolute;
+  right: 3px;
+  bottom: 6px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--pup-surface);
+  border-radius: 50%;
+  background: var(--pup-sage);
+}
+
+.pup-pet {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transition: transform 420ms ease, opacity 420ms ease;
+}
+.pup-pet-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  background: #f7ede0;
+  box-shadow: 0 1px 0 rgb(85 70 58 / 10%);
+  animation: pup-breathe 4s ease-in-out infinite;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.pup-pet.is-attentive .pup-pet-image { box-shadow: 0 0 0 2px rgb(169 92 47 / 34%); }
+/* 思考时的四阶段循环：闻一闻 → 咬一咬 → 摇一摇 → 歇一歇，每阶段 400ms。 */
+.pup-pet.is-thinking .pup-pet-image { animation: pup-think-stages 1.6s ease-in-out infinite; }
+/* 待机小动作：歪头 / 伸懒腰 / 看向一侧，各停留 1.5 秒后回到原状。 */
+.pup-pet.is-idle-tilt .pup-pet-image { transform-origin: 50% 88%; animation: pup-idle-tilt 1.5s ease-in-out; }
+.pup-pet.is-idle-stretch .pup-pet-image { transform-origin: 50% 100%; animation: pup-idle-stretch 1.5s ease-in-out; }
+.pup-pet.is-idle-peek .pup-pet-image { animation: pup-idle-peek 1.5s ease-in-out; }
+.pup-pet.is-compact .pup-pet-image { animation: none; }
+.pup-pet.is-compact .pup-think-bubble { display: none; }
+
+/* thinking 时头顶的「…」气泡，三个点依次浮现。 */
+.pup-think-bubble {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 8px;
+  border: 1px solid var(--pup-border);
+  border-radius: 10px 10px 10px 3px;
+  background: var(--pup-surface);
+  box-shadow: 0 5px 14px rgb(58 42 27 / 14%);
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: pup-pop-in 220ms ease-out;
+}
+.pup-think-bubble i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--pup-caramel-dark);
+  opacity: .25;
+  animation: pup-think-dot 1.2s ease-in-out infinite;
+}
+.pup-think-bubble i:nth-child(2) { animation-delay: .16s; }
+.pup-think-bubble i:nth-child(3) { animation-delay: .32s; }
+
+/* 休眠时的小 Zzz 气泡。 */
+.pup-zzz {
+  position: absolute;
+  top: -10px;
+  right: -2px;
+  padding: 1px 6px;
+  border: 1px solid var(--pup-border);
+  border-radius: 8px;
+  color: var(--pup-muted);
+  background: var(--pup-surface);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  pointer-events: none;
+  animation: pup-zzz-float 2.8s ease-in-out infinite;
+}
+
+.pup-panel {
+  position: absolute;
+  width: min(370px, calc(100vw - 24px));
+  max-height: min(600px, calc(100vh - 100px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--pup-border);
+  border-radius: 20px;
+  background: var(--pup-surface);
+  box-shadow: 0 20px 60px rgb(58 42 27 / 16%), 0 3px 12px rgb(58 42 27 / 8%);
+  pointer-events: auto;
+  animation: pup-panel-in 160ms ease-out;
+}
+.pup-panel.opens-left { right: -2px; }
+.pup-panel.opens-right { left: -2px; }
+.pup-panel.opens-up { bottom: 12px; transform-origin: bottom right; }
+.pup-panel.opens-down { top: 78px; transform-origin: top left; }
+
+.pup-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 16px 12px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.pup-panel-header:active { cursor: grabbing; }
+.pup-panel-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pup-panel-brand > div { display: grid; }
+.pup-panel-brand strong { font-size: 15px; font-weight: 650; letter-spacing: .01em; }
+.pup-panel-brand span:not(.pup-mini-avatar) { color: var(--pup-muted); font-size: 11px; }
+.pup-mini-avatar { display: block; width: 38px; height: 38px; flex: 0 0 auto; }
+.pup-header-actions { display: flex; gap: 3px; }
+.pup-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  color: var(--pup-muted);
+  background: transparent;
+  cursor: pointer;
+}
+.pup-icon-button:hover { color: var(--pup-ink); background: var(--pup-soft); }
+
+.pup-tabs { display: flex; gap: 4px; margin: 0 16px; padding: 3px; border-radius: 11px; background: var(--pup-soft); }
+.pup-tabs button {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--pup-muted);
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+.pup-tabs button.is-active { color: var(--pup-ink); background: var(--pup-surface); box-shadow: 0 1px 4px rgb(60 45 30 / 8%); }
+.pup-tab-count { min-width: 16px; padding: 1px 4px; border-radius: 8px; color: #fffaf3; background: var(--pup-caramel); font-size: 11px; line-height: 1.4; }
+.pup-panel-body { min-height: 250px; overflow: auto; padding: 18px 16px 16px; }
+.pup-empty { display: grid; justify-items: center; padding: 25px 12px 18px; text-align: center; }
+.pup-empty-mark { display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid var(--pup-border); border-radius: 16px; color: var(--pup-caramel-dark); background: var(--pup-soft); font-family: Georgia, serif; font-size: 20px; }
+.pup-empty h2 { margin: 15px 0 6px; font-size: 15px; font-weight: 600; }
+.pup-empty p { max-width: 270px; margin: 0; color: var(--pup-muted); font-size: 12px; line-height: 1.75; }
+.pup-page-action { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.pup-page-action button { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border: 1px solid var(--pup-border); border-radius: 8px; color: var(--pup-ink); background: var(--pup-surface); font-size: 11px; cursor: pointer; }
+.pup-page-action button:hover { border-color: var(--pup-caramel); }
+.pup-page-action button:disabled { opacity: 0.55; cursor: default; }
+.pup-page-action span { color: var(--pup-muted); font-size: 11px; }
+.pup-privacy-line { margin-top: 20px; padding-top: 13px; border-top: 1px solid var(--pup-soft); color: #8c8175; font-size: 11px; }
+.pup-history-empty > svg { color: var(--pup-caramel); }
+
+.pup-quick-actions {
+  position: absolute;
+  width: 304px;
+  padding: 11px;
+  border: 1px solid var(--pup-border);
+  border-radius: 15px;
+  background: var(--pup-surface);
+  box-shadow: 0 12px 36px rgb(58 42 27 / 15%);
+  pointer-events: auto;
+  animation: pup-panel-in 150ms ease-out;
+}
+.pup-quick-actions.opens-left { right: -2px; }
+.pup-quick-actions.opens-right { left: -2px; }
+.pup-quick-actions.opens-up { bottom: 12px; }
+.pup-quick-actions.opens-down { top: 78px; }
+.pup-quick-actions > span { display: block; margin: 0 3px 8px; color: var(--pup-muted); font-size: 11px; }
+.pup-quick-actions .pup-length-switch { margin-top: 0; }
+.pup-quick-actions .pup-reading-actions { margin-top: 8px; }
+
+.pup-selection-card { padding: 13px; border: 1px solid var(--pup-border); border-radius: 14px; background: var(--pup-soft); }
+.pup-selection-meta, .pup-result-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pup-selection-meta > span, .pup-result-heading > span { font-size: 12px; font-weight: 650; }
+.pup-selection-meta small, .pup-result-heading small { color: var(--pup-muted); font-size: 11px; }
+.pup-selection-card > p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 10px 0 0;
+  color: var(--pup-muted);
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.pup-reading-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.pup-reading-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pup-reading-actions button:disabled { opacity: .55; cursor: wait; }
+.pup-translate-action { grid-column: 1 / -1; }
+.pup-primary-action { border: 1px solid var(--pup-caramel-dark); color: #fffaf3; background: var(--pup-caramel-dark); }
+.pup-primary-action:hover:not(:disabled) { background: #7c3f20; }
+.pup-secondary-action { border: 1px solid var(--pup-border); color: var(--pup-ink); background: var(--pup-surface); }
+.pup-secondary-action:hover:not(:disabled) { border-color: #c4aa91; background: var(--pup-soft); }
+.pup-selection-notice { margin-bottom: 12px; padding: 11px 12px; border: 1px solid #e1c9a9; border-radius: 11px; color: #79512d; background: #fff5e7; font-size: 12px; line-height: 1.65; }
+
+.pup-length-switch { display: flex; gap: 3px; margin-top: 11px; padding: 3px; border-radius: 9px; background: var(--pup-soft); }
+.pup-length-switch button { flex: 1; min-height: 26px; border: 0; border-radius: 7px; color: var(--pup-muted); background: transparent; font-size: 11px; cursor: pointer; }
+.pup-length-switch button.is-active { color: var(--pup-ink); background: var(--pup-surface); box-shadow: 0 1px 2px rgb(85 70 58 / 10%); }
+.pup-result-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.pup-result-tools button { display: inline-flex; align-items: center; gap: 3px; padding: 0; border: 0; color: var(--pup-caramel-dark); background: transparent; font-size: 11px; cursor: pointer; }
+.pup-result-tools button:hover { text-decoration: underline; }
+.pup-item-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+.pup-item-actions button { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border: 1px solid var(--pup-border); border-radius: 999px; color: var(--pup-caramel-dark); background: var(--pup-surface); font-size: 11px; cursor: pointer; }
+.pup-item-actions button:hover:not(:disabled) { border-color: var(--pup-caramel); }
+.pup-item-actions button.is-collected { color: var(--pup-muted); background: var(--pup-soft); cursor: default; }
+.pup-collect-all { color: var(--pup-sage); }
+.pup-copy-note { margin-bottom: 8px; color: #6f7d5f; font-size: 11px; }
+.pup-error-actions { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+.pup-error-actions button { margin-top: 0; }
+
+.pup-loading { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 13px; border: 1px solid var(--pup-border); border-radius: 13px; }
+.pup-loading > svg { flex: 0 0 auto; color: var(--pup-caramel); animation: pup-spin 1.1s linear infinite; }
+.pup-loading > div { flex: 1; }
+.pup-loading strong { font-size: 12px; }
+.pup-loading p { margin: 2px 0 0; color: var(--pup-muted); font-size: 11px; }
+.pup-loading button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; color: var(--pup-muted); background: transparent; cursor: pointer; }
+.pup-loading button:hover { background: var(--pup-soft); }
+.pup-loading-meta { margin: 4px 0 0; color: var(--pup-muted); font-size: 11px; }
+/* 流式草稿：低透明度逐字展示，结束后被带证据的正式结果替换。 */
+.pup-draft-list { display: grid; gap: 3px; margin: 6px 0 0; padding: 0; list-style: none; opacity: .62; font-size: 12px; line-height: 1.65; }
+.pup-draft-list li::before { content: '· '; color: var(--pup-caramel-dark); }
+.pup-draft-cursor { display: inline-block; width: 7px; height: 13px; margin-left: 2px; vertical-align: -2px; border-radius: 1px; background: var(--pup-caramel); animation: pup-draft-blink 900ms steps(1) infinite; }
+@keyframes pup-draft-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.pup-error { margin-top: 12px; padding: 13px; border: 1px solid #e2bdb1; border-radius: 13px; color: #7c3e31; background: #fff5f1; }
+.pup-error strong { font-size: 12px; }
+.pup-error p { margin: 5px 0 0; font-size: 12px; line-height: 1.6; }
+.pup-error button { margin-top: 9px; padding: 5px 9px; border: 1px solid currentColor; border-radius: 8px; color: inherit; background: transparent; font-size: 11px; cursor: pointer; }
+
+.pup-result { margin-top: 16px; }
+.pup-result-heading { margin-bottom: 9px; }
+.pup-reading-item { padding: 14px 0; border-top: 1px solid var(--pup-soft); }
+.pup-reading-item > p { margin: 0; font-size: 13px; line-height: 1.75; }
+.pup-evidence-list { display: grid; gap: 8px; margin-top: 11px; }
+.pup-evidence { overflow: hidden; border: 1px solid var(--pup-border); border-radius: 11px; background: var(--pup-soft); }
+.pup-evidence button { display: inline-flex; align-items: center; gap: 4px; margin: 8px 10px 0; padding: 0; border: 0; color: var(--pup-caramel-dark); background: transparent; font-size: 11px; cursor: pointer; }
+.pup-evidence button:hover { text-decoration: underline; }
+.pup-evidence-label { display: block; margin: 8px 10px 0; color: var(--pup-muted); font-size: 11px; }
+.pup-evidence blockquote { margin: 7px 10px 10px; padding-left: 9px; border-left: 2px solid #d5b48e; color: var(--pup-muted); font-size: 11px; line-height: 1.7; white-space: pre-wrap; }
+.pup-insufficient { padding: 16px; border: 1px dashed var(--pup-border); border-radius: 13px; text-align: center; }
+.pup-insufficient strong { font-size: 13px; }
+.pup-insufficient p { margin: 6px 0 0; color: var(--pup-muted); font-size: 11px; line-height: 1.7; }
+.pup-status-dot.is-attentive { background: var(--pup-caramel); transform: scale(1.15); }
+
+.pup-reminder-floating {
+  position: absolute;
+  width: min(340px, calc(100vw - 24px));
+  pointer-events: auto;
+  animation: pup-panel-in 150ms ease-out;
+}
+.pup-reminder-floating.opens-left { right: -2px; }
+.pup-reminder-floating.opens-right { left: -2px; }
+.pup-reminder-floating.opens-up { bottom: 12px; }
+.pup-reminder-floating.opens-down { top: 78px; }
+.pup-nudge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: min(260px, calc(100vw - 24px));
+  padding: 9px 11px;
+  border: 1px solid var(--pup-border);
+  border-radius: 12px;
+  background: var(--pup-surface);
+  box-shadow: 0 10px 28px rgb(58 42 27 / 14%);
+  animation: pup-panel-in 150ms ease-out;
+  pointer-events: auto;
+}
+.pup-nudge span { font-size: 11px; line-height: 1.6; animation: pup-typing 620ms steps(16) both; }
+.pup-nudge button { flex: none; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 6px; color: var(--pup-muted); background: transparent; cursor: pointer; }
+.pup-nudge button:hover { background: var(--pup-soft); }
+.pup-nudge.opens-left { right: -2px; }
+.pup-nudge.opens-right { left: -2px; }
+.pup-nudge.opens-up { bottom: 12px; }
+.pup-nudge.opens-down { top: 78px; }
+/* 气泡尾巴：小方块旋转 45° 指向宠物。四个方向组合都会同时挂上，所以逐组写全。 */
+.pup-nudge::after,
+.pup-reminder-floating .pup-reminder-notice::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: var(--pup-surface);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+/* 气泡在宠物左上：尾巴贴右下角朝下。 */
+.pup-nudge.opens-left.opens-up::after,
+.pup-reminder-floating.opens-left.opens-up .pup-reminder-notice::after {
+  right: 16px;
+  bottom: -5px;
+  border-left: 1px solid var(--pup-border);
+  border-bottom: 1px solid var(--pup-border);
+}
+/* 气泡在宠物左下：尾巴贴右上角朝上。 */
+.pup-nudge.opens-left.opens-down::after,
+.pup-reminder-floating.opens-left.opens-down .pup-reminder-notice::after {
+  right: 16px;
+  top: -5px;
+  border-top: 1px solid var(--pup-border);
+  border-right: 1px solid var(--pup-border);
+}
+/* 气泡在宠物右上：尾巴贴左下角朝下。 */
+.pup-nudge.opens-right.opens-up::after,
+.pup-reminder-floating.opens-right.opens-up .pup-reminder-notice::after {
+  left: 16px;
+  bottom: -5px;
+  border-left: 1px solid var(--pup-border);
+  border-bottom: 1px solid var(--pup-border);
+}
+/* 气泡在宠物右下：尾巴贴左上角朝上。 */
+.pup-nudge.opens-right.opens-down::after,
+.pup-reminder-floating.opens-right.opens-down .pup-reminder-notice::after {
+  left: 16px;
+  top: -5px;
+  border-top: 1px solid var(--pup-border);
+  border-right: 1px solid var(--pup-border);
+}
+.pup-reminder-notice { position: relative; margin-bottom: 14px; padding: 14px; border: 1px solid #d8c3aa; border-radius: 14px; background: var(--pup-surface); }
+.pup-reminder-floating .pup-reminder-notice { margin: 0; box-shadow: 0 12px 36px rgb(58 42 27 / 15%); }
+.pup-reminder-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pup-reminder-heading > span { color: var(--pup-caramel-dark); font-size: 11px; font-weight: 700; }
+.pup-reminder-heading > button { display: grid; place-items: center; width: 25px; height: 25px; padding: 0; border: 0; border-radius: 7px; color: var(--pup-muted); background: transparent; cursor: pointer; }
+.pup-reminder-heading > button:hover { background: var(--pup-soft); }
+.pup-reminder-notice > p { margin: 7px 0; font-size: 12px; line-height: 1.7; animation: pup-typing 700ms steps(20) both; }
+.pup-reminder-notice > small { display: block; color: var(--pup-muted); font-size: 11px; line-height: 1.65; }
+.pup-reminder-notice > small strong { color: var(--pup-ink); font-weight: 600; }
+.pup-reminder-actions { display: flex; align-items: center; justify-content: flex-end; gap: 7px; margin-top: 12px; }
+.pup-reminder-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 30px; padding: 5px 9px; border: 1px solid var(--pup-border); border-radius: 8px; color: var(--pup-muted); background: var(--pup-surface); font-size: 11px; cursor: pointer; }
+.pup-reminder-actions button:first-child { color: var(--pup-ink); }
+.pup-reminder-actions button:hover { border-color: #c4aa91; color: var(--pup-caramel-dark); }
+
+.pup-history-list { display: grid; gap: 10px; }
+.pup-history-intro { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
+.pup-history-intro strong { font-size: 12px; }
+.pup-history-intro span { color: var(--pup-muted); font-size: 11px; }
+.pup-history-record { padding: 12px; border: 1px solid var(--pup-border); border-radius: 12px; content-visibility: auto; contain-intrinsic-size: 180px; }
+.pup-history-record-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pup-history-record-heading strong { font-size: 12px; }
+.pup-history-record-heading time { color: var(--pup-muted); font-size: 11px; }
+.pup-history-record > p { margin: 7px 0 5px; font-size: 11px; line-height: 1.65; }
+.pup-history-record > small { display: block; color: var(--pup-muted); font-size: 11px; line-height: 1.6; }
+.pup-history-status { display: flex; align-items: flex-start; gap: 8px; margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--pup-soft); }
+.pup-history-status > span { flex: 0 0 auto; padding: 2px 6px; border-radius: 6px; color: var(--pup-muted); background: var(--pup-soft); font-size: 11px; }
+.pup-history-status > span.is-shown { color: var(--pup-sage); }
+.pup-history-status > span.is-muted, .pup-history-status > span.is-cooldown, .pup-history-status > span.is-deferred { color: var(--pup-caramel-dark); }
+.pup-history-status > small { color: var(--pup-muted); font-size: 11px; line-height: 1.5; }
+
+.pup-glossary-empty > svg { color: var(--pup-caramel); }
+.pup-glossary-list { display: grid; gap: 10px; }
+.pup-glossary-entry { padding: 12px; border: 1px solid var(--pup-border); border-radius: 12px; content-visibility: auto; contain-intrinsic-size: 150px; }
+.pup-glossary-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.pup-glossary-heading strong { font-size: 12px; line-height: 1.5; }
+.pup-glossary-heading > div { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.pup-glossary-heading time { color: var(--pup-muted); font-size: 11px; }
+.pup-glossary-heading button { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 7px; color: var(--pup-muted); background: transparent; cursor: pointer; }
+.pup-glossary-heading button:hover { color: #a2543d; background: var(--pup-soft); }
+.pup-glossary-entry > p { margin: 7px 0 0; font-size: 11px; line-height: 1.65; }
+.pup-glossary-entry > small { display: block; margin-top: 5px; color: var(--pup-muted); font-size: 11px; }
+.pup-glossary-clear { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: 2px; padding: 6px 12px; border: 1px solid var(--pup-border); border-radius: 9px; color: var(--pup-muted); background: transparent; font-size: 11px; cursor: pointer; }
+.pup-glossary-clear:hover { border-color: #c4aa91; color: var(--pup-ink); }
+.pup-glossary-clear.is-confirm { border-color: #b4573d; color: #a24b31; background: #fff4ef; }
+.pup-nudge-glossary span { color: var(--pup-caramel-dark); font-weight: 600; }
+
+@keyframes pup-spin { to { transform: rotate(360deg); } }
+@keyframes pup-breathe { 0%, 100% { transform: scaleY(1) translateY(0); } 50% { transform: scaleY(1.015) translateY(-.7px); } }
+@keyframes pup-idle-tilt { 0%, 100% { transform: rotate(0deg) translateY(0); } 30%, 70% { transform: rotate(-9deg) translateY(-1px); } }
+@keyframes pup-idle-stretch {
+  0%, 100% { transform: scale(1) translateY(0); }
+  35% { transform: scale(1.07, .9) translateY(2px); }
+  70% { transform: scale(.97, 1.05) translateY(-2px); }
+}
+@keyframes pup-idle-peek {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25%, 40% { transform: translateX(-5px) rotate(-2deg); }
+  65%, 80% { transform: translateX(5px) rotate(2deg); }
+}
+@keyframes pup-think-dot { 0%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2px); } }
+@keyframes pup-pop-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(3px) scale(.9); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes pup-zzz-float { 0%, 100% { transform: translate3d(0, 0, 0); opacity: .72; } 50% { transform: translate3d(0, -4px, 0); opacity: 1; } }
+/* 气泡文字逐字浮现：clip-path 分步擦出，效果接近打字。 */
+@keyframes pup-typing { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+/* 思考四阶段：0-25% 停留 idle，25-50% sniffing，50-75% chewing，75-100% wagging，各 400ms 后循环。 */
+@keyframes pup-think-stages {
+  0%, 22% { transform: rotate(0deg) translateY(0); }
+  25%, 47% { transform: rotate(-2.4deg) translateY(-1px); }
+  50%, 72% { transform: rotate(0deg) scaleY(.94) translateY(1px); }
+  75%, 97% { transform: rotate(2.6deg) translateY(-2px); }
+  100% { transform: rotate(0deg) translateY(0); }
+}
+@keyframes pup-panel-in { from { opacity: 0; scale: .98; } to { opacity: 1; scale: 1; } }
+
+@media (max-width: 520px) {
+  .pup-panel.opens-left, .pup-quick-actions.opens-left, .pup-reminder-floating.opens-left, .pup-nudge.opens-left { right: -68px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
